@@ -1,0 +1,24 @@
+name: Ping Supabase (evita la pausa por inactividad)
+on:
+  schedule:
+    - cron: '0 12 * * 1,4'   # lunes y jueves
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consultar Supabase
+        run: |
+          curl -fsS "https://bhnpbbdocwwnizdwcobw.supabase.co/rest/v1/etapas_rover?select=id&limit=1" \
+            -H "apikey: sb_publishable_FPInAzXx1OTS7zwN3BgJeA_roLkK73W" >/dev/null
+      - name: Mantener activo el workflow (GitHub lo desactiva tras 60 días sin actividad)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          date -u +%F > .last-ping
+          git add .last-ping
+          git commit -m "ping $(cat .last-ping)" || exit 0
+          git push
